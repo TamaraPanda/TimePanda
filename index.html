@@ -51,12 +51,21 @@
     .goal-input{ width:110px; }
     .name-input{ width:220px; }
     nav{ display:flex; gap:10px; margin-top:10px; }
-    .tab{$1background:#fff; color:#111; cursor:pointer; }
-    .tab.active{ background:#111; color:#fff; border-color:#111; }
-    .hide{ display:none; }
-    .right{ margin-left:auto; }
-    .kpi{ display:flex; gap:18px; flex-wrap:wrap; align-items:baseline; }
-    .hint{ font-size:13px; color:var(--muted); margin-top:8px; }
+button.tab{
+  padding:10px 16px;
+  border-radius:999px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:#111;
+  cursor:pointer;
+  font-weight:500;
+}
+
+button.tab.active{
+  background:#111;
+  color:#fff;
+  border-color:#111;
+}
   </style>
 </head>
 <body>

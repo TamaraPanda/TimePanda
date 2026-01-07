@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TimePanda – Prototype</title>
+  <style>
+    :root{
+      --bg:#ffffff;
+      --card:#ffffff;
+      --border:#e6e6e6;
+      --text:#111;
+      --muted:#666;
+      --pill:#f2f2f2;
+      --bar:#111;
+      --barOver:#444;
+      --track:#eee;
+      --danger:#d32f2f;
+    }
+    *{ box-sizing:border-box; }
+    body{ font-family:-apple-system, system-ui, Arial; margin:18px; color:var(--text); background:var(--bg); }
+    header{ display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; }
+    h1{ font-size:20px; margin:0; }
+    .muted{ color:var(--muted); font-size:14px; }
+    .card{ border:1px solid var(--border); border-radius:14px; padding:14px; margin:12px 0; background:var(--card); }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    input, select, button{ font-size:16px; padding:10px; border-radius:12px; border:1px solid #ccc; }
+    input[type="text"]{ min-width: 180px; }
+    button{ border:0; background:#111; color:#fff; cursor:pointer; }
+    button.secondary{ background:#eee; color:#111; border:1px solid #ddd; }
+    button.danger{ background:var(--danger); }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+    .big{ font-size:28px; font-weight:700; }
+    .pill{ display:inline-block; padding:3px 8px; border-radius:999px; background:var(--pill); font-size:12px; }
+    .progress{ width:100%; height:12px; border-radius:999px; background:var(--track); overflow:hidden; }
+    .fill{ height:100%; width:0%; background:var(--bar); border-radius:999px; }
+    .fill.over{ background:var(--barOver); }
+    .bars{ display:grid; gap:10px; margin-top:10px; }
+    .bar-top{ display:flex; justify-content:space-between; gap:10px; align-items:baseline; }
+    .bar-title{ font-weight:600; }
+    .bar-sub{ font-size:13px; color:var(--muted); }
+    table{ width:100%; border-collapse:collapse; }
+    th, td{ padding:8px 6px; border-bottom:1px solid #eee; text-align:left; }
+    .mini{ font-size:14px; padding:7px 10px; border-radius:10px; }
+    .grid2{ display:grid; grid-template-columns: 1fr; gap:12px; }
+    @media(min-width:800px){ .grid2{ grid-template-columns: 1fr 1fr; } }
+    ul{ padding-left:18px; margin:10px 0 0; }
+    li{ margin:10px 0; }
+    .cat-line{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }
+    .cat-actions{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .goal-input{ width:110px; }
+    .name-input{ width:220px; }
+    nav{ display:flex; gap:10px; margin-top:10px; }
+    .tab{ padding:8px 12px; border-radius:999px; border:1px solid var(--border); background:#fff; cursor:pointer; }
+    .tab.active{ background:#111; color:#fff; border-color:#111; }
+    .hide{ display:none; }
+    .right{ margin-left:auto; }
+    .kpi{ display:flex; gap:18px; flex-wrap:wrap; align-items:baseline; }
+    .hint{ font-size:13px; color:var(--muted); margin-top:8px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>TimePanda</h1>
+    <div class="muted">Prototype · Time Budget + Ziele (Minuten) + Balken</div>
+  </div>
+  <div class="muted">Heute: <span id="uiTodayKey"></span></div>
+</header>
+
+<nav>
+  <button class="tab active" data-tab="today">Heute</button>
+  <button class="tab" data-tab="week">Woche <span class="pill">Pro</span></button>
+  <button class="tab" data-tab="settings">Einstellungen</button>
+</nav>
+
+<!-- TODAY -->
+<section id="tab-today">
+
+  <div class="card">
+    <div class="row">
+      <label class="muted">Tagesbudget (Minuten)</label>
+      <input id="uiBudget" type="number" min="0" style="width:140px" />
+      <button class="secondary" id="uiBudgetSave">Speichern</button>
+      <span class="right pill" id="uiPlanStatus">Free</span>
+    </div>
+
+    <div style="margin-top:10px" class="kpi">
+      <div>
+        <div class="muted">Heute übrig</div>
+        <div class="big" id="uiRemaining">—</div>
+      </div>
+      <div>
+        <div class="muted">Verbraucht</div>
+        <div class="big" id="uiSpent">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <!-- Timer & Quick Add -->
+    <div class="card">
+      <div style="font-weight:600">Loggen</div>
+      <div class="muted">Timer oder Quick-Add.</div>
+
+      <div class="row" style="margin-top:10px">
+        <input id="uiTaskName" placeholder="Aufgabe (z. B. Statistik lernen)" style="flex:1; min-width:220px" />
+        <select id="uiCategory"></select>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button id="uiStartStop">Start</button>
+        <button class="secondary" id="uiSaveTimer" disabled>Timer-Log speichern</button>
+        <button class="secondary" id="uiResetTimer">Reset</button>
+        <span class="pill" id="uiTimer">00:00</span>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <button class="secondary mini" data-quick="10">+10m</button>
+        <button class="secondary mini" data-quick="20">+20m</button>
+        <button class="secondary mini" data-quick="30">+30m</button>
+        <button class="secondary mini" data-quick="60">+60m</button>
+      </div>
+    </div>
+
+    <!-- Progress bars -->
+    <div class="card">
+      <div style="font-weight:600">Heute: Fortschritt</div>
+      <div class="muted">Ist/Ziel pro Kategorie (Minuten).</div>
+      <div class="bars" id="uiBars"></div>
+    </div>
+  </div>
+
+  <!-- Logs -->
+  <div class="card">
+    <div class="row" style="justify-content:space-between">
+      <div>
+        <div style="font-weight:600">Logs (heute)</div>
+        <div class="muted" id="uiLogsKey"></div>
+      </div>
+      <button class="secondary" id="uiClearToday">Heute löschen</button>
+    </div>
+
+    <div style="margin-top:10px; overflow:auto">
+      <table>
+        <thead>
+          <tr><th>Aufgabe</th><th>Kategorie</th><th>Dauer</th><th></th></tr>
+        </thead>
+        <tbody id="uiLogTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+</section>
+
+<!-- WEEK (Pro placeholder) -->
+<section id="tab-week" class="hide">
+  <div class="card">
+    <div style="font-weight:600">Woche (Pro)</div>
+    <div class="muted">Platzhalter – kommt als nächstes.</div>
+  </div>
+</section>
+
+<!-- SETTINGS -->
+<section id="tab-settings" class="hide">
+
+  <div class="card">
+    <div style="font-weight:600">Kategorien & Ziele</div>
+    <div class="muted">Hier kannst du Kategorien direkt bearbeiten: Name ändern + Ziel-Minuten anpassen + löschen.</div>
+
+    <div class="row" style="margin-top:10px">
+      <input id="uiNewCategory" placeholder="Neue Kategorie (z. B. Lernen)" style="flex:1; min-width:220px" />
+      <button class="secondary" id="uiAddCategory">Hinzufügen</button>
+    </div>
+
+    <div class="hint">Tip: Name ändern → Feld bearbeiten und Enter drücken (oder raus klicken). Wenn du umbenennst, werden die heutigen Logs automatisch mit umbenannt.</div>
+
+    <div id="uiCategoryListWrap" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:600">Plan / Pro (Platzhalter)</div>
+    <div class="muted">Für den Prototype nur Toggle.</div>
+    <div class="row" style="margin-top:10px">
+      <button class="secondary" id="uiTogglePro">Pro an/aus</button>
+      <span class="pill" id="uiProState">Free</span>
+    </div>
+  </div>
+
+</section>
+
+<script>
+/**
+ * TimePanda Prototype – structured foundation
+ * Single file, but organized in modules (Storage, Model, UI, App)
+ */
+
+// =======================
+// 1) STORAGE
+// =======================
+const Storage = (() => {
+  const KEYS = {
+    budget: "tp_budget_v1",
+    cats: "tp_categories_v1",      // [{name, goalMin}]
+    pro: "tp_pro_v1",              // "1" | "0"
+    logsPrefix: "tp_logs_"         // tp_logs_YYYY-MM-DD
+  };
+
+  const todayKey = () => {
+    const d = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  };
+
+  const getBudget = () => Number(localStorage.getItem(KEYS.budget) ?? 360);
+  const setBudget = (v) => localStorage.setItem(KEYS.budget, String(v));
+
+  const defaultCats = () => ([
+    { name:"Uni", goalMin:120 },
+    { name:"Fitness", goalMin:60 },
+    { name:"Business", goalMin:60 },
+    { name:"Haushalt", goalMin:30 },
+    { name:"Selfcare", goalMin:30 },
+    { name:"Social", goalMin:60 }
+  ]);
+
+  const getCats = () => {
+    const raw = localStorage.getItem(KEYS.cats);
+    if (!raw) {
+      const d = defaultCats();
+      localStorage.setItem(KEYS.cats, JSON.stringify(d));
+      return d;
+    }
+    try {
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr) || !arr.length) return defaultCats();
+      return arr.map(x => ({
+        name: String(x.name ?? "").trim() || "Kategorie",
+        goalMin: Math.max(0, Number(x.goalMin ?? 0))
+      }));
+    } catch {
+      return defaultCats();
+    }
+  };
+
+  const setCats = (cats) => localStorage.setItem(KEYS.cats, JSON.stringify(cats));
+
+  const getPro = () => localStorage.getItem(KEYS.pro) === "1";
+  const setPro = (isPro) => localStorage.setItem(KEYS.pro, isPro ? "1" : "0");
+
+  const getLogs = (day = todayKey()) => JSON.parse(localStorage.getItem(KEYS.logsPrefix + day) || "[]");
+  const setLogs = (logs, day = todayKey()) => localStorage.setItem(KEYS.logsPrefix + day, JSON.stringify(logs));
+
+  return { todayKey, getBudget, setBudget, getCats, setCats, getPro, setPro, getLogs, setLogs };
+})();
+
+// =======================
+// 2) MODEL (domain logic)
+// =======================
+const Model = (() => {
+  const sumMinutes = (logs) => logs.reduce((acc, l) => acc + l.minutes, 0);
+
+  const minutesByCategory = (logs) => {
+    const map = {};
+    logs.forEach(l => { map[l.category] = (map[l.category] || 0) + l.minutes; });
+    return map;
+  };
+
+  const fmtMin = (mins) => {
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return h <= 0 ? `${m}m` : `${h}h ${m}m`;
+  };
+
+  const pad = (n) => String(n).padStart(2, "0");
+  const msToMMSS = (ms) => {
+    const s = Math.floor(ms / 1000);
+    return `${pad(Math.floor(s/60))}:${pad(s%60)}`;
+  };
+
+  return { sumMinutes, minutesByCategory, fmtMin, msToMMSS };
+})();
+
+// =======================
+// 3) UI refs
+// =======================
+const UI = (() => {
+  const $ = (id) => document.getElementById(id);
+
+  return {
+    tabs: [...document.querySelectorAll(".tab")],
+    tabToday: $("tab-today"),
+    tabWeek: $("tab-week"),
+    tabSettings: $("tab-settings"),
+
+    uiTodayKey: $("uiTodayKey"),
+    uiLogsKey: $("uiLogsKey"),
+
+    budget: $("uiBudget"),
+    budgetSave: $("uiBudgetSave"),
+    remaining: $("uiRemaining"),
+    spent: $("uiSpent"),
+    planStatus: $("uiPlanStatus"),
+
+    taskName: $("uiTaskName"),
+    category: $("uiCategory"),
+    startStop: $("uiStartStop"),
+    saveTimer: $("uiSaveTimer"),
+    resetTimer: $("uiResetTimer"),
+    timer: $("uiTimer"),
+
+    bars: $("uiBars"),
+
+    logTable: $("uiLogTable"),
+    clearToday: $("uiClearToday"),
+
+    newCategory: $("uiNewCategory"),
+    addCategory: $("uiAddCategory"),
+    catListWrap: $("uiCategoryListWrap"),
+
+    togglePro: $("uiTogglePro"),
+    proState: $("uiProState")
+  };
+})();
+
+// =======================
+// 4) APP (controller)
+// =======================
+const App = (() => {
+  // Timer state
+  let running = false;
+  let startTs = null;
+  let elapsedMs = 0;
+  let tick = null;
+
+  // Tabs
+  const setActiveTab = (name) => {
+    UI.tabs.forEach(b => b.classList.toggle("active", b.dataset.tab === name));
+    UI.tabToday.classList.toggle("hide", name !== "today");
+    UI.tabWeek.classList.toggle("hide", name !== "week");
+    UI.tabSettings.classList.toggle("hide", name !== "settings");
+  };
+
+  // Render
+  const renderProState = () => {
+    const pro = Storage.getPro();
+    UI.proState.textContent = pro ? "Pro" : "Free";
+    UI.planStatus.textContent = pro ? "Pro" : "Free";
+  };
+
+  const renderBudgetKpis = () => {
+    const budget = Number(UI.budget.value || 0);
+    const logs = Storage.getLogs();
+    const spent = Model.sumMinutes(logs);
+    const remaining = Math.max(0, budget - spent);
+    UI.remaining.textContent = Model.fmtMin(remaining);
+    UI.spent.textContent = Model.fmtMin(spent);
+  };
+
+  const renderCategoryDropdown = (selected = null) => {
+    const cats = Storage.getCats();
+    UI.category.innerHTML = "";
+    cats.forEach(c => {
+      const opt = document.createElement("option");
+      opt.value = c.name;
+      opt.textContent = c.name;
+      UI.category.appendChild(opt);
+    });
+    UI.category.value = (selected && cats.some(x => x.name === selected))
+      ? selected
+      : (cats[0]?.name || "");
+  };
+
+  const renderBars = () => {
+    const cats = Storage.getCats();
+    const logs = Storage.getLogs();
+    const byCat = Model.minutesByCategory(logs);
+
+    UI.bars.innerHTML = "";
+    cats.forEach(c => {
+      const used = byCat[c.name] || 0;
+      const goal = c.goalMin || 0;
+      const denom = goal > 0 ? goal : Math.max(used, 1);
+      const pct = Math.min(100, Math.round((used / denom) * 100));
+      const over = goal > 0 && used > goal;
+      const rightText = goal > 0
+        ? (over ? `Über Ziel: ${Model.fmtMin(used - goal)}` : `Rest: ${Model.fmtMin(Math.max(0, goal - used))}`)
+        : "Kein Ziel";
+
+      const wrap = document.createElement("div");
+      wrap.className = "bar-row";
+      wrap.innerHTML = `
+        <div class="bar-top">
+          <div>
+            <div class="bar-title">${c.name}</div>
+            <div class="bar-sub">Ist: ${Model.fmtMin(used)} / Ziel: ${goal > 0 ? Model.fmtMin(goal) : "—"}</div>
+          </div>
+          <div class="bar-sub">${rightText}</div>
+        </div>
+        <div class="progress">
+          <div class="fill ${over ? "over" : ""}" style="width:${pct}%"></div>
+        </div>
+      `;
+      UI.bars.appendChild(wrap);
+    });
+  };
+
+  const renderLogs = () => {
+    const logs = Storage.getLogs();
+    UI.logTable.innerHTML = "";
+    logs.forEach((l, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${l.name}</td>
+        <td><span class="pill">${l.category}</span></td>
+        <td>${Model.fmtMin(l.minutes)}</td>
+        <td><button class="secondary mini" data-del="${idx}">X</button></td>
+      `;
+      UI.logTable.appendChild(tr);
+    });
+  };
+
+  // Categories manager: inline editable name + goal
+  const renderCategoriesManager = () => {
+    const cats = Storage.getCats();
+    const ul = document.createElement("ul");
+
+    cats.forEach((c, idx) => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <div class="cat-line">
+          <div class="cat-actions">
+            <span class="muted">Name</span>
+            <input class="name-input" type="text" value="${c.name.replace(/"/g,'&quot;')}" data-name-idx="${idx}" />
+          </div>
+          <div class="cat-actions">
+            <span class="muted">Ziel</span>
+            <input class="goal-input" type="number" min="0" value="${c.goalMin}" data-goal="${idx}">
+            <span class="muted">Min</span>
+            <button class="mini danger" data-action="delete" data-idx="${idx}">Löschen</button>
+          </div>
+        </div>
+      `;
+      ul.appendChild(li);
+    });
+
+    UI.catListWrap.innerHTML = "";
+    UI.catListWrap.appendChild(ul);
+  };
+
+  // Timer
+  const updateTimerUI = () => {
+    const ms = running ? (Date.now() - startTs + elapsedMs) : elapsedMs;
+    UI.timer.textContent = Model.msToMMSS(ms);
+    UI.saveTimer.disabled = (ms < 5_000);
+  };
+
+  const resetTimer = () => {
+    running = false;
+    UI.startStop.textContent = "Start";
+    if (tick) clearInterval(tick);
+    tick = null;
+    startTs = null;
+    elapsedMs = 0;
+    updateTimerUI();
+  };
+
+  // Mutations
+  const addLog = ({ name, category, minutes }) => {
+    const logs = Storage.getLogs();
+    logs.unshift({ name, category, minutes, ts: Date.now() });
+    Storage.setLogs(logs);
+    renderBudgetKpis();
+    renderLogs();
+    renderBars();
+  };
+
+  const renameCategoryEverywhereToday = (oldName, newName) => {
+    const logs = Storage.getLogs();
+    let changed = false;
+    logs.forEach(l => {
+      if (l.category === oldName) {
+        l.category = newName;
+        changed = true;
+      }
+    });
+    if (changed) Storage.setLogs(logs);
+  };
+
+  // Events
+  const bindEvents = () => {
+    // Tabs
+    UI.tabs.forEach(btn => btn.addEventListener("click", () => setActiveTab(btn.dataset.tab)));
+
+    // Budget
+    UI.budgetSave.addEventListener("click", () => {
+      const v = Math.max(0, Number(UI.budget.value || 0));
+      UI.budget.value = v;
+      Storage.setBudget(v);
+      renderBudgetKpis();
+    });
+
+    // Timer start/stop
+    UI.startStop.addEventListener("click", () => {
+      running = !running;
+      if (running) {
+        startTs = Date.now();
+        UI.startStop.textContent = "Stop";
+        tick = setInterval(updateTimerUI, 250);
+      } else {
+        elapsedMs += (Date.now() - startTs);
+        UI.startStop.textContent = "Start";
+        clearInterval(tick); tick = null;
+        updateTimerUI();
+      }
+    });
+
+    UI.resetTimer.addEventListener("click", resetTimer);
+
+    UI.saveTimer.addEventListener("click", () => {
+      const ms = running ? (Date.now() - startTs + elapsedMs) : elapsedMs;
+      const minutes = Math.max(1, Math.round(ms / 60000));
+      const name = (UI.taskName.value || "Ohne Titel").trim();
+      const category = UI.category.value;
+      addLog({ name, category, minutes });
+      resetTimer();
+    });
+
+    // Quick add
+    document.addEventListener("click", (e) => {
+      const qb = e.target.closest("button[data-quick]");
+      if (!qb) return;
+      const minutes = Number(qb.getAttribute("data-quick"));
+      const name = (UI.taskName.value || "Ohne Titel").trim();
+      const category = UI.category.value;
+      addLog({ name, category, minutes });
+    });
+
+    // Delete log
+    UI.logTable.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-del]");
+      if (!btn) return;
+      const idx = Number(btn.getAttribute("data-del"));
+      const logs = Storage.getLogs();
+      logs.splice(idx, 1);
+      Storage.setLogs(logs);
+      renderBudgetKpis();
+      renderLogs();
+      renderBars();
+    });
+
+    // Clear today
+    UI.clearToday.addEventListener("click", () => {
+      Storage.setLogs([]);
+      renderBudgetKpis();
+      renderLogs();
+      renderBars();
+    });
+
+    // Add category
+    UI.addCategory.addEventListener("click", () => {
+      const name = (UI.newCategory.value || "").trim();
+      if (!name) return;
+      const cats = Storage.getCats();
+      if (cats.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+        alert("Diese Kategorie gibt es schon.");
+        return;
+      }
+      cats.push({ name, goalMin: 60 });
+      Storage.setCats(cats);
+      UI.newCategory.value = "";
+      renderCategoryDropdown(name);
+      renderCategoriesManager();
+      renderBars();
+    });
+
+    // Category manager actions
+    UI.catListWrap.addEventListener("click", (e) => {
+      const delBtn = e.target.closest("button[data-action='delete']");
+      if (!delBtn) return;
+
+      const idx = Number(delBtn.getAttribute("data-idx"));
+      let cats = Storage.getCats();
+
+      if (cats.length <= 1) {
+        alert("Du brauchst mindestens 1 Kategorie.");
+        return;
+      }
+
+      const name = cats[idx].name;
+      const ok = confirm(`Kategorie wirklich löschen?\n\n"${name}"`);
+      if (!ok) return;
+
+      // Wenn die gelöschte Kategorie gerade ausgewählt ist, danach Dropdown neu setzen
+      const currentlySelected = UI.category.value;
+
+      cats.splice(idx, 1);
+      Storage.setCats(cats);
+
+      renderCategoryDropdown(currentlySelected === name ? null : currentlySelected);
+      renderCategoriesManager();
+      renderBars();
+    });
+
+    // Goal change
+    UI.catListWrap.addEventListener("change", (e) => {
+      const goalInp = e.target.closest("input[data-goal]");
+      if (goalInp) {
+        const idx = Number(goalInp.getAttribute("data-goal"));
+        const v = Math.max(0, Number(goalInp.value || 0));
+        const cats = Storage.getCats();
+        cats[idx].goalMin = v;
+        Storage.setCats(cats);
+        renderBars();
+        return;
+      }
+
+      const nameInp = e.target.closest("input[data-name-idx]");
+      if (nameInp) {
+        // On change (Enter in some browsers triggers change), commit rename
+        commitRename(nameInp);
+        return;
+      }
+    });
+
+    // Name rename commit on blur + Enter
+    UI.catListWrap.addEventListener("keydown", (e) => {
+      const nameInp = e.target.closest("input[data-name-idx]");
+      if (!nameInp) return;
+      if (e.key === "Enter") {
+        e.preventDefault();
+        nameInp.blur();
+      }
+      if (e.key === "Escape") {
+        // reset to stored value
+        const idx = Number(nameInp.getAttribute("data-name-idx"));
+        const cats = Storage.getCats();
+        nameInp.value = cats[idx]?.name ?? "";
+        nameInp.blur();
+      }
+    });
+
+    UI.catListWrap.addEventListener("blur", (e) => {
+      const nameInp = e.target.closest("input[data-name-idx]");
+      if (!nameInp) return;
+      commitRename(nameInp);
+    }, true);
+
+    function commitRename(nameInp){
+      const idx = Number(nameInp.getAttribute("data-name-idx"));
+      const cats = Storage.getCats();
+      const oldName = cats[idx]?.name;
+      if (!oldName) return;
+
+      const newName = String(nameInp.value || "").trim();
+      if (!newName) {
+        nameInp.value = oldName;
+        return;
+      }
+
+      // no-op
+      if (newName === oldName) return;
+
+      // unique
+      if (cats.some((c, j) => j !== idx && c.name.toLowerCase() === newName.toLowerCase())) {
+        alert("Diese Kategorie gibt es schon.");
+        nameInp.value = oldName;
+        return;
+      }
+
+      cats[idx].name = newName;
+      Storage.setCats(cats);
+      renameCategoryEverywhereToday(oldName, newName);
+
+      // re-render everything that depends on category names
+      const selected = UI.category.value;
+      renderCategoryDropdown(selected === oldName ? newName : selected);
+      renderCategoriesManager();
+      renderLogs();
+      renderBudgetKpis();
+      renderBars();
+    }
+
+    // Pro toggle placeholder
+    UI.togglePro.addEventListener("click", () => {
+      Storage.setPro(!Storage.getPro());
+      renderProState();
+    });
+  };
+
+  const init = () => {
+    UI.uiTodayKey.textContent = Storage.todayKey();
+    UI.uiLogsKey.textContent = Storage.todayKey();
+
+    UI.budget.value = Storage.getBudget();
+
+    renderProState();
+    renderCategoryDropdown();
+    renderCategoriesManager();
+    renderBudgetKpis();
+    renderLogs();
+    renderBars();
+    updateTimerUI();
+    bindEvents();
+  };
+
+  return { init };
+})();
+
+App.init();
+</script>
+</body>
+</html>
